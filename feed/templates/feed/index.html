@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Feed</title>
+    <!-- Link CSS file -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'feed/styles.css' %}">
+</head>
+<body>
+    <h1>Welcome to the Social Media Feed</h1>
+    <p>This is a sample page.</p>
+
+    <!-- Link JavaScript file -->
+    <script src="{% static 'feed/script.js' %}"></script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Feed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        .post {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .post h3 {
+            margin: 0;
+        }
+        .post p {
+            margin: 10px 0;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+        .actions button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .actions button.like {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .actions button.comment {
+            background-color: #2196F3;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Social Media Feed</h1>
+    <div id="posts">
+        <!-- Posts will be dynamically loaded here -->
+    </div>
+
+    <script>
+        // Fetch posts from the API
+        async function fetchPosts() {
+            const response = await fetch('/api/posts/');
+            const posts = await response.json();
+            const postsContainer = document.getElementById('posts');
+
+            posts.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.className = 'post';
+                postElement.innerHTML = `
+                    <h3>${post.user.username}</h3>
+                    <p>${post.content}</p>
+                    <div class="actions">
+                        <button class="like" onclick="likePost(${post.id})">Like (${post.likes_count})</button>
+                        <button class="comment" onclick="commentPost(${post.id})">Comment (${post.comments_count})</button>
+                    </div>
+                `;
+                postsContainer.appendChild(postElement);
+            });
+        }
+
+        // Like a post
+        async function likePost(postId) {
+            const response = await fetch(`/api/posts/${postId}/like/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                }
+            });
+            if (response.ok) {
+                alert('Post liked!');
+                fetchPosts(); // Refresh the feed
+            } else {
+                alert('Failed to like post.');
+            }
+        }
+
+        // Comment on a post
+        async function commentPost(postId) {
+            const comment = prompt('Enter your comment:');
+            if (comment) {
+                const response = await fetch(`/api/posts/${postId}/comment/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify({ content: comment })
+                });
+                if (response.ok) {
+                    alert('Comment added!');
+                    fetchPosts(); // Refresh the feed
+                } else {
+                    alert('Failed to add comment.');
+                }
+            }
+        }
+
+        // Load posts when the page loads
+        fetchPosts();
+    </script>
+</body>
+</html>
